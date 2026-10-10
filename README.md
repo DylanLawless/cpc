@@ -1,86 +1,116 @@
 # cpc: copy code
 
-Copy files and directories into **one clipboard entry** with filenames and an optional exact token count under a selected encoding. A fast everyday command for sharing source code with AI assistants.
+**The missing copy command.**
+
+`Copy` and `paste`. Two of the first things we learn to do on a computer.
+
+Copy files and entire directories into one labelled clipboard entry, ready to paste anywhere. `cpc` preserves filenames and reports character and token counts.
+
+<img src="https://github.com/user-attachments/assets/2bd2daed-713d-413f-a1cc-baf2d7ffc24c"
+     alt="And now I simply grant it root access instead of copying and pasting."
+     width="700">
+
+## Example: sharing code with AI
+
+When an AI assistant asks for several source files, copying them individually is tedious. You may also prefer to share selected files without granting an agent direct access to your filesystem.
+
+`cpc` collects the requested files in one command:
 
 ```console
-$ cpc src/ tests/
-Copied 38 files | 154,280 chars | 39,614 tokens (o200k_base)
+$ cpc main.py config.py src/
+Copied 14 files | 54,280 chars | 13,614 tokens (o200k_base)
 ```
 
-*Illustrative output; actual counts depend on selected files.*
+The clipboard contains:
 
-- macOS, Linux desktop and Windows
-- A local native Rust executable; no accounts, telemetry, backend or runtime API requests
-- Mixed file and directory arguments, with deduplication and predictable ordering
-- Respect `.gitignore`, `.ignore`, hidden entries and built-in exclusions on recursive scans
-- Original plain-text `==== filename ====` headers, enabled by default
-- Local `o200k_base` and `cl100k_base` token counts; disable for speed
-- One-line terminal receipt; raw content goes to the clipboard or stdout
+```text
+==== main.py ====
+...
 
-## Install
+==== config.py ====
+...
 
-**Build from source** (Rust 1.85 or later):
+==== src/utils.py ====
+...
+```
+
+Paste the result into your AI conversation. You control which files to share, and the assistant can identify each file by its path.
+
+- **One command:** Copy files, directories or both, with duplicate files removed.
+- **Ready to paste:** Include filenames by default and check token counts before sharing.
+- **Local:** Runs on macOS, Linux desktops and Windows, without accounts, telemetry or a backend.
+
+***Pro tip:** ask your AI to list all the files it needs in one line. 
+Then copy them all at once like this:* `cpc file1 file2 directory/ file*`.
+
+
+## Installation
+
+Requires [Rust and Cargo](https://rustup.rs/) (Rust 1.85 or later).
+
+Install directly from GitHub:
 
 ```sh
-git clone YOUR-REPOSITORY-URL
+cargo install --git https://github.com/DylanLawless/cpc.git --bin cpc
+```
+
+Or clone the repository anywhere and install from source:
+
+```sh
+git clone https://github.com/DylanLawless/cpc.git
 cd cpc
 cargo install --path .
 ```
 
-Replace `YOUR-REPOSITORY-URL` with the published Git URL. During local development, run `cargo run -- <arguments>` without installing.
-
-For downloadable binaries, create a tagged GitHub Release using the included release workflow after cross-platform CI succeeds. Installing a release binary needs no Rust toolchain.
-
-### Linux clipboard support
-
-`cpc` uses `wl-copy` under Wayland or `xclip`/`xsel` under X11. Install one for your desktop, for example:
+Cargo installs the executable in `~/.cargo/bin/` on macOS/Linux or `%USERPROFILE%\.cargo\bin\` on Windows. Ensure the directory is on `PATH`, then verify:
 
 ```sh
-# Debian/Ubuntu, Wayland
-sudo apt install wl-clipboard
-
-# Debian/Ubuntu, X11
-sudo apt install xclip
+cpc --version
+cpc --help
 ```
-
-For SSH sessions or headless environments, use `--stdout`. On macOS the tool uses `pbcopy`; on Windows it uses the native clipboard API.
 
 ## Usage
 
 ```sh
-cpc main.py
-cpc main.py config.json tests/
-cpc src/
-cpc .
-cpc src/ --no-headers
-cpc src/ --no-tokens
-cpc src/ --tokenizer cl100k_base
-cpc src/ --stdout > context.txt
-cpc --config examples/config.toml src/
-cpc . --hidden
-cpc . --no-ignore
-cpc --help
+cpc main.py                          # One file
+cpc main.py config.json tests/       # Mixed files and directories
+cpc src/                             # Entire directory
+cpc .                                # Current directory
+cpc src/ --no-headers                # Omit filename headers
+cpc src/ --no-tokens                 # Disable token counting
+cpc src/ --tokenizer cl100k_base     # Use another encoding
+cpc src/ --stdout > context.txt      # Write to a file instead
+cpc . --hidden                       # Include hidden entries
+cpc . --no-ignore                    # Disable ignore-file rules
+cpc --config path/to/config.toml src/
 ```
 
-By default, files are copied like this:
+By default, `cpc` adds a `==== filename ====` header and one newline after each file. File contents and their original line endings are preserved. The summary goes to the terminal's standard error stream; `--stdout` writes only the formatted content to standard output.
 
-```text
-==== src/main.py ====
-print('hello')
+### Linux clipboard
 
-==== src/config.py ====
-DEBUG = False
+On Linux desktops, install `wl-clipboard` for Wayland or `xclip`/`xsel` for X11. For example, on Debian/Ubuntu:
+
+```sh
+sudo apt install wl-clipboard  # Wayland
+# or
+sudo apt install xclip         # X11
 ```
 
-The program adds one newline after each file, exactly as the original Bash `cpc` command does. It does not normalise the original content's line endings.
+Use `--stdout` in SSH or headless environments. macOS uses `pbcopy`; Windows uses the native clipboard API.
 
-## Configuration
+## Configuration (optional)
 
-**Optional.** Without a file, sensible defaults apply. Copy [examples/config.toml](examples/config.toml) to:
+`cpc` works without configuration. Defaults include filename headers, `o200k_base` token counting, Git-aware exclusions, a 5,000-file limit and a 50,000,000-byte payload limit.
 
-- macOS: `~/.config/cpc/config.toml`
-- Linux: `${XDG_CONFIG_HOME:-~/.config}/cpc/config.toml`
-- Windows: `%APPDATA%\cpc\config.toml`
+To change the defaults, **after cloning the repository**, run from its root on macOS/Linux:
+
+```sh
+mkdir -p ~/.config/cpc
+cp examples/config.toml ~/.config/cpc/config.toml
+```
+
+On Linux, use `$XDG_CONFIG_HOME/cpc/config.toml` if `XDG_CONFIG_HOME` is set. On Windows, copy `examples/config.toml` to `%APPDATA%\cpc\config.toml`. If you installed directly through Cargo, create the configuration file using [this example](examples/config.toml).
 
 ```toml
 [output]
@@ -99,23 +129,56 @@ max_files = 5000
 max_bytes = 50000000
 ```
 
-Settings resolve in this order: built-in defaults, configuration file, CLI switches. Bad settings are errors rather than silently ignored.
+CLI options take precedence over configuration, which overrides built-in defaults. Invalid settings produce an error.
 
-**Selection rules:** Recursive scans respect Git ignore rules and built-in exclusions for common dependencies, output folders and likely credential files. An *explicitly named file* is included even if hidden or ignored, including `.env`. Known sensitive filenames produce a one-line `sensitive input` warning in the receipt. Double-check what you paste. Symlinked directories are not followed; explicit symlinks to regular files are allowed. Binary or non-UTF-8 files discovered within directories are skipped and counted, but explicitly selecting one is an error. A missing or unreadable file, or exceeding a limit, aborts before the clipboard is changed.
+## Updating and uninstalling
+
+If you cloned the repository, update from its root:
+
+```sh
+git pull
+cargo install --path .
+```
+
+For a direct installation from GitHub:
+
+```sh
+cargo install --git https://github.com/DylanLawless/cpc.git --bin cpc --force
+```
+
+Uninstall either Cargo installation with:
+
+```sh
+cargo uninstall copy-code-cli
+```
+
+The source repository and personal configuration remain until you delete them.
+
+## File selection and privacy
+
+Directory scans respect `.gitignore`, `.ignore`, hidden-file settings and built-in exclusions for common dependency, build and credential files. Explicitly named files override these exclusions, including `.env`. Known sensitive filenames trigger a warning, so check what you paste. Directory symlinks are not followed.
+
+Binary or non-UTF-8 files discovered during directory scans are skipped. Explicitly selecting such a file produces an error. Missing or unreadable files and exceeded limits also produce errors before the clipboard is changed.
+
+All processing is local. `cpc` does not upload files, execute their contents, send telemetry or update itself. Clipboard contents may be accessible to other applications. Filename exclusions do not constitute a secret scanner.
 
 ## Token counts
 
-Token counts include the **entire formatted payload**, including headers and inserted separators. `o200k_base` and `cl100k_base` count local raw-text encoding tokens, not complete billed API message tokens. Different models, message wrappers, system prompts and special-token processing can produce different API usage totals. Choose the encoding to match your workflow; we do not claim to infer it from a model name.
+Estimates your token count before pasting files.
+Use the default or choose the encoding in `[report]` of your `config.toml`:
 
-`--no-tokens` (or `tokenizer = "off"`) skips tokeniser initialisation and counting. Character counts are always Unicode scalar values, not bytes, words or grapheme clusters.
+| Model family | `tokenizer` | Notes |
+| --- | --- | --- |
+| OpenAI GPT-4o, GPT-4.1 and compatible models | `"o200k_base"` | Native encoding for these models |
+| OpenAI GPT-4 and GPT-3.5 Turbo | `"cl100k_base"` | Native encoding for these older models |
+| Claude (Anthropic), Gemini (Google) | `"o200k_base"` or `"off"` | OpenAI-encoding proxy only; native tokenisers are not supported |
+| Llama, Qwen, DeepSeek, Mistral | `"o200k_base"` or `"off"` | OpenAI-encoding proxy only; model-specific tokenisers are not supported |
 
-## Trust and privacy
+`cpc` counts the complete formatted text, including filenames and separators. Counts are exact **for the selected encoding**, but may differ from a model's input-token usage. `"off"` or `--no-tokens` disables counting. Character counts use Unicode scalar values.
 
-The tool only reads files you select, runs entirely locally, and does **not** make network requests at runtime. It neither executes files nor installs an updater. There is no telemetry. Clipboard content is accessible to the system's clipboard services and to applications into which you paste it. Exclusions are a best-effort safeguard, **not** a secret scanner.
+## Development and testing
 
-## Develop and test
-
-See [docs/BUILD_AND_TEST.md](docs/BUILD_AND_TEST.md) for commands, platform tests, release instructions, and the migration procedure from a `.bash_profile` function.
+See [docs/BUILD_AND_TEST.md](docs/BUILD_AND_TEST.md) for platform tests and release instructions.
 
 ```sh
 cargo fmt --all -- --check
@@ -124,9 +187,7 @@ cargo test --all-targets
 cargo build --release
 ```
 
-## Release status
-
-This source archive includes the implementation, tests, CI and release workflows. Native compilation and cross-platform runtime testing have **not** been performed in the environment used to assemble the archive because Rust/Cargo were unavailable there. Run the documented validation steps and generate/commit `Cargo.lock` before publishing a release. Do not treat the repository as a verified binary distribution until CI passes.
+**Release status:** The initial source package has not yet been verified on all target operating systems. Run the checks above, generate and commit `Cargo.lock`, and confirm CI passes before publishing release binaries.
 
 ## Licence
 
