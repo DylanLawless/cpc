@@ -1,0 +1,32 @@
+# Rust build output
+/target/
+
+# Local release artefacts
+/dist/
+/artifacts/
+/cpc-v*.tar.gz
+/cpc-v*.zip
+/SHA256SUMS
+
+# Coverage and profiling
+*.profraw
+*.profdata
+
+# Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local secrets and environment configuration
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template

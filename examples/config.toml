@@ -1,0 +1,18 @@
+# Optional. Copy to ~/.config/cpc/config.toml (macOS/Linux)
+# or %APPDATA%\cpc\config.toml (Windows).
+
+[output]
+headers = true
+
+[selection]
+respect_ignore_files = true
+include_hidden = false
+exclude = []
+
+[report]
+# Choose "o200k_base", "cl100k_base" or "off".
+tokenizer = "o200k_base"
+
+[limits]
+max_files = 5000
+max_bytes = 50000000
