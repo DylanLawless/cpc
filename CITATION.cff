@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata in this file."
+type: software
+title: "cpc: copy code"
+authors:
+  - family-names: "Lawless"
+    given-names: "Dylan"
+version: "0.1.0"
+repository-code: "https://github.com/DylanLawless/cpc"
+url: "https://github.com/DylanLawless/cpc"
+license: MIT
+abstract: >-
+  Command-line utility that copies selected files and directories into one
+  labelled clipboard entry, preserving filenames and reporting character and
+  token counts.
